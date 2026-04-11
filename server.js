@@ -19,8 +19,9 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 })
 .then(() => console.log("MongoDB connected"))
-.catch(err => console.log("MongoDB error:", err));
-
+.catch(err => console.log("MongoDB error:", err));mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log("MongoDB error:", err));
 /* ── Email Schema ─────────────────────────────────── */
 const EmailSchema = new mongoose.Schema({
   email: { type: String, unique: true },
