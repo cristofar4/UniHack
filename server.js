@@ -35,9 +35,15 @@ initDB();
 
 // Brevo Setup
 const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+apiInstance.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
 console.log('BREVO_API_KEY loaded:', process.env.BREVO_API_KEY ? 'YES' : 'MISSING ❌');
+
+// ✅ USE VERIFIED EMAIL HERE
+const SENDER_EMAIL = process.env.SENDER_EMAIL || "yourverifiedemail@gmail.com";
 
 // Waitlist Endpoint
 app.post('/api/waitlist', async (req, res) => {
@@ -48,19 +54,24 @@ app.post('/api/waitlist', async (req, res) => {
   }
 
   try {
-    // Save to DB
-    await pool.query(
-      'INSERT INTO waitlist (email) VALUES ($1) ON CONFLICT (email) DO NOTHING',
+    // Save to DB (prevent duplicates)
+    const result = await pool.query(
+      'INSERT INTO waitlist (email) VALUES ($1) ON CONFLICT (email) DO NOTHING RETURNING *',
       [email]
     );
 
     const countResult = await pool.query('SELECT COUNT(*) FROM waitlist');
     const total = countResult.rows[0].count;
 
-    // Send welcome email to user
+    // If already exists
+    if (result.rowCount === 0) {
+      return res.json({ success: true, message: "Already joined" });
+    }
+
+    // Email to user
     const userEmail = {
-      sender: { name: "UniHack", email: "noreply@unihack.com" },   // Change this after verifying sender in Brevo
-      to: [{ email: email }],
+      sender: { name: "UniHack", email: SENDER_EMAIL },
+      to: [{ email }],
       subject: "🎉 You're on the UniHack Waitlist!",
       htmlContent: `
         <div style="background:#0a0f0d;color:#fff;padding:40px;border-radius:12px;max-width:600px;margin:auto;border:1px solid #00ffa6;">
@@ -72,16 +83,30 @@ app.post('/api/waitlist', async (req, res) => {
       `
     };
 
-    // Send notification to you
+    // Email to you (optional)
     const ownerEmail = {
-      sender: { name: "UniHack", email: "noreply@unihack.com" },
+      sender: { name: "UniHack", email: SENDER_EMAIL },
       to: [{ email: process.env.OWNER_EMAIL }],
       subject: `🔔 New Waitlist Signup - ${email}`,
       htmlContent: `<h2>New Signup</h2><p>Email: ${email}</p><p>Total: ${total}</p>`
     };
 
-    await apiInstance.sendTransacEmail(userEmail);
-    await apiInstance.sendTransacEmail(ownerEmail);
+    // ✅ Send emails safely (no crash)
+    try {
+      await apiInstance.sendTransacEmail(userEmail);
+      console.log("✅ User email sent");
+    } catch (e) {
+      console.error("❌ User email failed:", e.message);
+    }
+
+    try {
+      if (process.env.OWNER_EMAIL) {
+        await apiInstance.sendTransacEmail(ownerEmail);
+        console.log("✅ Owner email sent");
+      }
+    } catch (e) {
+      console.error("❌ Owner email failed:", e.message);
+    }
 
     console.log(`✅ New waitlist signup: ${email} | Total: ${total}`);
 
@@ -98,7 +123,9 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // Keep-alive
 setInterval(() => {
   if (process.env.RENDER_URL) {
-    require('https').get(`https://${process.env.RENDER_URL}/health`).on('error', () => {});
+    require('https')
+      .get(`https://${process.env.RENDER_URL}/health`)
+      .on('error', () => {});
   }
 }, 14 * 60 * 1000);
 
