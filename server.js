@@ -43,7 +43,7 @@ apiInstance.setApiKey(
 console.log('BREVO_API_KEY loaded:', process.env.BREVO_API_KEY ? 'YES' : 'MISSING ❌');
 
 // ✅ USE VERIFIED EMAIL HERE
-const SENDER_EMAIL = process.env.SENDER_EMAIL || "yourverifiedemail@gmail.com";
+const SENDER_EMAIL = process.env.SENDER_EMAIL || "unihack810@gmail.com ";
 
 // Waitlist Endpoint
 app.post('/api/waitlist', async (req, res) => {
