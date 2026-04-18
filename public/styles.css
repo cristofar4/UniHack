@@ -840,7 +840,7 @@ nav.scrolled::after {
 
 .pricing-btn { display: block; width: 100%; text-align: center; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; }
 .pricing-btn-outline { border: 1.5px solid #00ffa6; color: #00ffa6; background: transparent; }
-.pricing-btn-outline:hover { background: rgba(0,255,166,0.08); }
+
 .pricing-btn-solid { background: #00ffa6; color: #000; border: none; }
 .pricing-btn-solid:hover { background: #00d98a; }
 
@@ -974,14 +974,13 @@ nav.scrolled::after {
   cursor: pointer;
 }
 
-.story-card:hover { border-color: #00ffa6; background: rgba(0,255,166,0.06); box-shadow: 0 0 30px rgba(0,255,166,0.08); }
+.story-card:hover { border-color: #00ffa6;  box-shadow: 0 0 30px rgba(0,255,166,0.08); }
 .quote-icon { position: absolute; top: 20px; right: 24px; font-size: 60px; font-weight: 900; color: rgba(0,255,166,0.2); line-height: 1; font-family: Georgia, serif; }
 .story-card:hover .quote-icon { color: rgba(0,255,166,0.4); }
 .quote-text { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.75; font-style: italic; margin-bottom: 28px; padding-right: 20px; }
 .story-author { display: flex; align-items: center; gap: 14px; }
 .story-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(0,255,166,0.4); object-fit: cover; flex-shrink: 0; }
 .story-name { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 3px; }
-.story-name-green { color: #00ffa6; }
 .story-role { font-size: 12px; color: rgba(255,255,255,0.4); }
 
 /* RESERVE */
@@ -1043,7 +1042,6 @@ nav.scrolled::after {
   transition: all 0.3s ease;
 }
 
-.btn-join:hover { background: #00d98a; }
 
 .reserve-success { margin-bottom: 20px; }
 
