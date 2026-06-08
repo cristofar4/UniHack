@@ -20,7 +20,7 @@
   <a href="#roles" onclick="closeMobileMenu()">Roles</a>
   <a href="#leaderboard" onclick="closeMobileMenu()">Leaderboard</a>
   <a href="#pricing" onclick="closeMobileMenu()">Pricing</a>
-  <a href="#waitlist" class="mobile-btn-nav" onclick="closeMobileMenu()">Join Waitlist</a>
+  <a href="/auth.html" class="mobile-btn-nav" onclick="closeMobileMenu()">Sign In</a>
 </div>
 
 <nav id="main-nav">
@@ -35,7 +35,7 @@
       <a href="#leaderboard">Leaderboard</a>
       <a href="#pricing">Pricing</a>
     </div>
-    <a href="#waitlist" class="btn-nav">Join Waitlist</a>
+    <a href="/auth.html" class="btn-nav">Sign In</a>
     <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
@@ -56,7 +56,7 @@
     </h1>
     <p>Join university-wide hackathons, earn role-based badges, master your field, and unlock elite career opportunities in tech.</p>
     <div class="hero-buttons">
-      <a href="#waitlist" class="btn-primary">Join Waitlist</a>
+      <a href="/auth.html?mode=signup" class="btn-primary">Get Started</a>
       <a href="#features" class="btn-outline">Explore Features</a>
     </div>
     <div class="stats-row" id="stats-row">
@@ -416,7 +416,7 @@
         </tr>
       </tbody>
     </table>
-    <div class="lb-footer"><a href="#waitlist" class="lb-view-all">Join waitlist &#x25BC;</a></div>
+    <div class="lb-footer"><a href="/auth.html?mode=signup" class="lb-view-all">Join UniHack &#x25BC;</a></div>
   </div>
 </section>
 
@@ -443,7 +443,7 @@
         <li><span class="check">✓</span> Join open hackathons</li>
         <li><span class="check">✓</span> Standard profile</li>
       </ul>
-      <a href="#waitlist" class="pricing-btn pricing-btn-outline">Get Started</a>
+      <a href="/auth.html?mode=signup" class="pricing-btn pricing-btn-outline">Get Started</a>
     </div>
     <div class="pricing-card pricing-popular">
       <div class="popular-badge">MOST POPULAR</div>
@@ -456,7 +456,7 @@
         <li><span class="check">✓</span> Job board access</li>
         <li><span class="check">✓</span> Verified certificates</li>
       </ul>
-      <a href="#waitlist" class="pricing-btn pricing-btn-solid">Upgrade Now</a>
+      <a href="/auth.html?mode=signup" class="pricing-btn pricing-btn-solid">Upgrade Now</a>
     </div>
     <div class="pricing-card">
       <h3>Advanced Pro</h3>
@@ -468,7 +468,7 @@
         <li><span class="check">✓</span> Priority job applications</li>
         <li><span class="check">✓</span> Campus-wide leaderboard</li>
       </ul>
-      <a href="#waitlist" class="pricing-btn pricing-btn-outline">Upgrade Now</a>
+      <a href="/auth.html?mode=signup" class="pricing-btn pricing-btn-outline">Upgrade Now</a>
     </div>
   </div>
 </section>
@@ -480,7 +480,7 @@
       <h2>Recruit Verified <span class="highlight">Tech Talent</span></h2>
       <p>Partner with us to host challenges and hire top students directly from the leaderboard.</p>
     </div>
-    <a href="#waitlist" class="btn-partner">Partner With Us</a>
+    <a href="/auth.html?mode=signup&type=organization" class="btn-partner">Partner With Us</a>
   </div>
   <div class="partners-divider"></div>
   <!-- Real tech company logos as inline SVG / wordmarks -->
@@ -576,24 +576,12 @@
       <p>Sign up early to receive <strong>500 Bonus Points</strong>, an exclusive Early Adopter badge, and priority access to the Job Board.</p>
     </div>
     <div class="reserve-form" id="reserve-form">
-      <div class="email-input-wrap">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:rgba(255,255,255,0.4);flex-shrink:0"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-        <input type="email" id="waitlist-email" placeholder="Enter your university email" />
-      </div>
-      <button class="btn-join" id="join-btn" onclick="joinWaitlist()">Join Waitlist</button>
-    </div>
-    <div class="reserve-success" id="reserve-success" style="display:none;">
-      <div class="success-box">
-        <div class="success-check">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ffa6" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
-        </div>
-        <div class="success-title">You're on the list!</div>
-        <div class="success-sub">Watch your inbox for the early access invite.</div>
-      </div>
+      <a href="/auth.html?mode=signup" class="btn-join" style="text-decoration:none;text-align:center;flex:1;">Create free account</a>
+      <a href="/auth.html" class="btn-join" style="text-decoration:none;text-align:center;flex:1;background:transparent;border:2px solid #00ffa6;color:#00ffa6;">Sign In</a>
     </div>
     <div class="reserve-count">
       <span class="count-dot"></span>
-      <span><strong id="waitlist-count">2,847</strong> students already waitlisted</span>
+      <span><strong id="waitlist-count">2,847</strong> students already joined</span>
     </div>
   </div>
 </section>
@@ -776,65 +764,7 @@
   }
   loadWaitlistCount();
 
-  // ── WAITLIST FUNCTION ──
-  async function joinWaitlist() {
-    const emailInput = document.getElementById('waitlist-email');
-    const btn = document.getElementById('join-btn');
-    const email = emailInput.value.trim();
-
-    if (!email || !email.includes('@')) {
-      emailInput.style.borderColor = '#ff4d4d';
-      emailInput.placeholder = 'Please enter a valid email';
-      setTimeout(() => { 
-        emailInput.style.borderColor = ''; 
-        emailInput.placeholder = 'Enter your university email'; 
-      }, 2000);
-      return;
-    }
-
-    btn.textContent = 'Processing...';
-    btn.style.background = 'rgba(0,255,166,0.5)';
-    btn.disabled = true;
-    emailInput.disabled = true;
-
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        document.getElementById('reserve-form').style.display = 'none';
-        document.getElementById('reserve-success').style.display = 'block';
-        // Update count after joining
-        if (data.count) {
-          const el = document.getElementById('waitlist-count');
-          if (el) el.textContent = Number(data.count).toLocaleString();
-        }
-      } else {
-        throw new Error(data.error || 'Something went wrong.');
-      }
-    } catch (err) {
-      btn.textContent = 'Join Waitlist';
-      btn.style.background = '#00ffa6';
-      btn.disabled = false;
-      emailInput.disabled = false;
-      alert(err.message || 'Something went wrong. Please try again.');
-    }
-  }
-
-  // Enter key support
-  document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('waitlist-email');
-    if (input) {
-      input.addEventListener('keydown', e => { 
-        if (e.key === 'Enter') joinWaitlist(); 
-      });
-    }
-  });
+  // Waitlist removed — sign up / sign in now live at /auth.html
 </script>
 </body>
 </html>
