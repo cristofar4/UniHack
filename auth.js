@@ -104,16 +104,16 @@ router.get('/me', async (req, res) => {
 // GET /api/auth/verify?token=...
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
-  if (!token) return res.redirect('/auth.html?verified=invalid');
+  if (!token) return res.redirect('/?verified=invalid');
   try {
     const result = await pool.query(
       'UPDATE users SET email_verified = TRUE, verify_token = NULL WHERE verify_token = $1 RETURNING id',
       [token]
     );
-    return res.redirect(result.rowCount === 0 ? '/auth.html?verified=invalid' : '/auth.html?verified=success');
+    return res.redirect(result.rowCount === 0 ? '/?verified=invalid' : '/?verified=success');
   } catch (err) {
     console.error('verify error:', err.message);
-    return res.redirect('/auth.html?verified=error');
+    return res.redirect('/?verified=error');
   }
 });
 

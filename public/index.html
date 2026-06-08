@@ -8,6 +8,7 @@
   <!-- High Quality Bold Favicon -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cdefs%3E%3Cfilter id='glow' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeGaussianBlur stdDeviation='6' result='coloredBlur'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='%230a0f0d'/%3E%3Crect width='512' height='512' rx='108' fill='none' stroke='%2300ffa6' stroke-width='38'/%3E%3Ctext x='256' y='310' font-family='monospace' font-size='260' font-weight='900' fill='%2300ffa6' text-anchor='middle' dominant-baseline='middle' filter='url(%23glow)'%3E%3E_%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth-overlay.css">
 </head>
 <body>
 
@@ -766,5 +767,61 @@
 
   // Waitlist removed — sign up / sign in now live at /auth.html
 </script>
+
+<!-- ───────── CINEMATIC AUTH OVERLAY (lives on the landing) ───────── -->
+<div class="uh-auth" id="uh-auth" aria-hidden="true">
+  <canvas class="uh-wind" id="uh-wind"></canvas>
+  <button class="uh-close" id="uh-close" type="button" aria-label="Close">✕</button>
+
+  <div class="uh-stage" id="uh-stage">
+    <div class="uh-portal"></div>
+    <div class="uh-door">
+      <div class="uh-door-half left"></div>
+      <div class="uh-door-half right"></div>
+    </div>
+    <div class="uh-bee" id="uh-bee" aria-hidden="true">
+      <svg viewBox="0 0 64 48" width="56" height="42">
+        <ellipse class="uw" cx="26" cy="14" rx="11" ry="8"></ellipse>
+        <ellipse class="uw" cx="38" cy="14" rx="11" ry="8"></ellipse>
+        <ellipse cx="32" cy="28" rx="16" ry="12" fill="#ffd200"></ellipse>
+        <rect x="22" y="17" width="5" height="22" rx="2" fill="#0a0f0d"></rect>
+        <rect x="31" y="16" width="5" height="24" rx="2" fill="#0a0f0d"></rect>
+        <rect x="40" y="17" width="5" height="22" rx="2" fill="#0a0f0d"></rect>
+        <circle cx="49" cy="23" r="3.2" fill="#0a0f0d"></circle>
+      </svg>
+    </div>
+  </div>
+  <div class="uh-flash"></div>
+
+  <div class="uh-card" id="uh-card">
+    <div class="uh-brand"><span class="uh-ico">&gt;_</span>Uni<span class="uh-grn">Hack</span></div>
+    <div class="uh-tabs">
+      <button class="uh-tab active" type="button" data-tab="signin">Sign In</button>
+      <button class="uh-tab" type="button" data-tab="signup">Sign Up</button>
+    </div>
+    <div class="uh-banner" id="uh-banner" hidden></div>
+
+    <form class="uh-form" id="uh-form-signin" novalidate>
+      <label>Email<input type="email" id="uh-si-email" autocomplete="email" placeholder="you@university.edu" required></label>
+      <label>Password<input type="password" id="uh-si-pass" autocomplete="current-password" placeholder="••••••••" required></label>
+      <button class="uh-submit" type="submit">Sign In</button>
+    </form>
+
+    <form class="uh-form" id="uh-form-signup" hidden novalidate>
+      <div class="uh-seg">
+        <button type="button" class="uh-seg-btn active" data-type="student">🎓 Student</button>
+        <button type="button" class="uh-seg-btn" data-type="organization">🏢 Organization</button>
+      </div>
+      <label id="uh-name-label">Full name<input type="text" id="uh-su-name" autocomplete="name" placeholder="Ada Lovelace" required></label>
+      <label>Email<input type="email" id="uh-su-email" autocomplete="email" placeholder="you@university.edu" required></label>
+      <label>Password<input type="password" id="uh-su-pass" autocomplete="new-password" placeholder="At least 8 characters" required></label>
+      <button class="uh-submit" type="submit">Create account</button>
+    </form>
+
+    <p class="uh-msg" id="uh-msg" role="alert"></p>
+  </div>
+</div>
+
+<script src="auth-overlay.js"></script>
 </body>
 </html>
