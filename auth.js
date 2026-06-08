@@ -1,22 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const { pool } = require('./db');
 const { sendVerificationEmail } = require('./email');
+const { signToken, setSession, clearSession, readSession } = require('./session');
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-insecure-secret-change-me';
-if (!process.env.JWT_SECRET) {
-  console.warn('⚠️  JWT_SECRET not set — using an insecure dev secret. Set JWT_SECRET in production.');
-}
-
-const COOKIE = 'uh_session';
-const TOKEN_TTL_DAYS = 7;
-
-// Throttle auth endpoints to slow down brute force / abuse
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 40,
@@ -25,54 +16,13 @@ const authLimiter = rateLimit({
   message: { error: 'Too many attempts. Please try again in a few minutes.' }
 });
 
-function isValidEmail(e) {
-  return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-
-function signToken(user) {
-  return jwt.sign(
-    { id: user.id, email: user.email, type: user.account_type },
-    JWT_SECRET,
-    { expiresIn: `${TOKEN_TTL_DAYS}d` }
-  );
-}
-
-function setSession(res, token) {
-  res.cookie(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
-    path: '/'
-  });
-}
-
-function publicUser(u) {
-  return {
-    id: u.id,
-    email: u.email,
-    fullName: u.full_name,
-    accountType: u.account_type,
-    emailVerified: u.email_verified
-  };
-}
-
-// Reads + verifies the session cookie; attaches req.user or null
-function readSession(req) {
-  const token = req.cookies && req.cookies[COOKIE];
-  if (!token) return null;
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
-  }
-}
+const isValidEmail = e => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const publicUser = u => ({ id: u.id, email: u.email, fullName: u.full_name, accountType: u.account_type, emailVerified: u.email_verified });
 
 // POST /api/auth/signup
 router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { email, password, fullName, accountType } = req.body || {};
-
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' });
     if (!password || password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
 
@@ -94,8 +44,6 @@ router.post('/signup', authLimiter, async (req, res) => {
     }
 
     const user = result.rows[0];
-
-    // Fire-and-forget — never block signup on email delivery
     sendVerificationEmail(user.email, verifyToken)
       .then(() => console.log(`✅ Verification email sent: ${user.email}`))
       .catch(err => console.error('❌ Verification email failed:', err.message));
@@ -116,8 +64,6 @@ router.post('/login', authLimiter, async (req, res) => {
 
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
     const user = result.rows[0];
-
-    // Same response whether the user exists or not (no account enumeration)
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
@@ -133,7 +79,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
-  res.clearCookie(COOKIE, { path: '/' });
+  clearSession(res);
   return res.json({ success: true });
 });
 
@@ -143,7 +89,7 @@ router.get('/me', async (req, res) => {
   if (!payload) return res.status(401).json({ error: 'Not authenticated' });
   try {
     const result = await pool.query(
-      'SELECT id, email, full_name, account_type, email_verified, created_at FROM users WHERE id = $1',
+      'SELECT id, email, full_name, account_type, email_verified FROM users WHERE id = $1',
       [payload.id]
     );
     const user = result.rows[0];
@@ -155,7 +101,7 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// GET /api/auth/verify?token=...  (clicked from the email)
+// GET /api/auth/verify?token=...
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
   if (!token) return res.redirect('/auth.html?verified=invalid');

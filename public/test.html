@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniHack — Skill Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='108' fill='%230a0f0d'/%3E%3Crect width='512' height='512' rx='108' fill='none' stroke='%2300ffa6' stroke-width='38'/%3E%3Ctext x='256' y='310' font-family='monospace' font-size='260' font-weight='900' fill='%2300ffa6' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="grid"></div>
+  <nav class="app-nav">
+    <a class="logo" href="/"><div class="logo-icon">&gt;_</div><div>Uni<span>Hack</span></div></a>
+    <a class="btn-ghost" href="/dashboard.html">Exit</a>
+  </nav>
+
+  <div class="warn" id="warn">⚠️ Stay on the test screen — leaving is recorded.</div>
+
+  <!-- INTRO -->
+  <div class="center-wrap" id="intro">
+    <div class="focus-card glow">
+      <h2 id="intro-title">Skill Test</h2>
+      <p class="sub">This is a proctored test — the rules keep your badge meaningful.</p>
+      <ul class="rules">
+        <li>⏱️ <span><b>Timed.</b> The clock starts the moment you begin.</span></li>
+        <li>🖥️ <span><b>Stay here.</b> Leaving the tab or window is detected and recorded.</span></li>
+        <li>🚫 <span><b>No copy/paste.</b> Right-click and text selection are disabled.</span></li>
+        <li>⚠️ <span><b>3 strikes.</b> Leave the screen 3 times and the test auto-submits.</span></li>
+      </ul>
+      <button class="btn" id="start">Start test</button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="container" id="quiz" style="display:none;">
+    <div class="test-top">
+      <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+      <span id="qcount">1 / 6</span>
+      <span class="timer" id="timer">00:00</span>
+      <span class="viol" id="viol" style="display:none;"></span>
+    </div>
+    <div class="q-card">
+      <div class="q-prompt" id="prompt"></div>
+      <div id="opts"></div>
+      <div class="test-actions"><button class="btn" id="next">Next</button></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="center-wrap" id="result" style="display:none;">
+    <div class="focus-card glow">
+      <div id="result-emoji" style="font-size:42px;">🎉</div>
+      <div class="score-num" id="score-pct">0%</div>
+      <div class="score-sub" id="score-line">—</div>
+      <div id="badge-wrap" style="margin-bottom:10px;"></div>
+      <div class="result-row">
+        <div class="result-stat"><div class="k">Score</div><div class="v" id="r-score">0/0</div></div>
+        <div class="result-stat"><div class="k">XP gained</div><div class="v accent" id="r-xp">+0</div></div>
+        <div class="result-stat"><div class="k">Level</div><div class="v" id="r-level">1</div></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a class="btn" href="/dashboard.html">Back to dashboard</a>
+        <a class="btn btn-outline" href="/leaderboard.html">Leaderboard</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const role = params.get('role');
+    let questions = [], idx = 0, selected = [], violations = 0, timeLeft = 0, totalTime = 0;
+    let timerId = null, started = false, finished = false, lastViol = 0, graceUntil = 0, roleLabel = '';
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    fetch('/api/auth/me', { credentials: 'include' }).then(r => { if (!r.ok) location.href = '/auth.html'; });
+
+    $('start').addEventListener('click', startTest);
+
+    async function startTest() {
+      if (!role) { alert('No role specified.'); location.href = '/dashboard.html'; return; }
+      try { await document.documentElement.requestFullscreen?.(); } catch (e) {}
+      let data;
+      try {
+        const r = await fetch(`/api/test/${role}/start`, { credentials: 'include' });
+        if (!r.ok) { alert('Could not load the test.'); return; }
+        data = await r.json();
+      } catch (e) { alert('Network error.'); return; }
+      questions = data.questions || [];
+      if (!questions.length) { alert('No questions available for this role yet.'); location.href = '/dashboard.html'; return; }
+      roleLabel = data.roleLabel || '';
+      selected = new Array(questions.length).fill(-1);
+      totalTime = timeLeft = data.durationSec || questions.length * 45;
+      started = true; graceUntil = Date.now() + 1200;
+      $('intro').style.display = 'none';
+      $('quiz').style.display = 'block';
+      attachGuards();
+      render();
+      tick();
+      timerId = setInterval(tick, 1000);
+    }
+
+    function render() {
+      const q = questions[idx];
+      $('prompt').textContent = q.prompt;
+      $('qcount').textContent = `${idx + 1} / ${questions.length}`;
+      $('pfill').style.width = `${(idx / questions.length) * 100}%`;
+      const opts = Array.isArray(q.options) ? q.options : [];
+      $('opts').innerHTML = opts.map((o, i) => `<button class="opt${selected[idx] === i ? ' chosen' : ''}" data-i="${i}">${esc(o)}</button>`).join('');
+      $('opts').querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => { selected[idx] = parseInt(b.dataset.i); render(); }));
+      $('next').textContent = idx === questions.length - 1 ? 'Submit' : 'Next';
+    }
+
+    $('next').addEventListener('click', () => {
+      if (idx < questions.length - 1) { idx++; render(); } else finish();
+    });
+
+    function tick() {
+      const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+      const s = String(timeLeft % 60).padStart(2, '0');
+      $('timer').textContent = `${m}:${s}`;
+      $('timer').classList.toggle('danger', timeLeft <= 30);
+      if (timeLeft <= 0) { finish(); return; }
+      timeLeft--;
+    }
+
+    function onVisibility() { if (document.hidden) registerViolation(); }
+    function onBlur() { registerViolation(); }
+    function onFsChange() { if (!document.fullscreenElement) registerViolation(); }
+    function prevent(e) { if (started && !finished) { e.preventDefault(); registerViolation(); } }
+    function softPrevent(e) { if (started && !finished) e.preventDefault(); }
+
+    function attachGuards() {
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('blur', onBlur);
+      document.addEventListener('contextmenu', prevent);
+      ['copy', 'cut', 'paste'].forEach(ev => document.addEventListener(ev, prevent));
+      document.addEventListener('selectstart', softPrevent);
+      document.addEventListener('fullscreenchange', onFsChange);
+    }
+    function detachGuards() {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('contextmenu', prevent);
+      ['copy', 'cut', 'paste'].forEach(ev => document.removeEventListener(ev, prevent));
+      document.removeEventListener('selectstart', softPrevent);
+      document.removeEventListener('fullscreenchange', onFsChange);
+    }
+
+    function registerViolation() {
+      if (!started || finished) return;
+      const now = Date.now();
+      if (now < graceUntil) return;       // ignore the fullscreen-transition blip
+      if (now - lastViol < 800) return;   // debounce blur + visibility firing together
+      lastViol = now;
+      violations++;
+      $('viol').style.display = 'inline';
+      $('viol').textContent = `⚠️ ${violations}/3 warnings`;
+      showWarn();
+      if (violations >= 3) finish();
+    }
+
+    let warnTimer = null;
+    function showWarn() {
+      const w = $('warn'); w.classList.add('show');
+      clearTimeout(warnTimer); warnTimer = setTimeout(() => w.classList.remove('show'), 2200);
+    }
+
+    async function finish() {
+      if (finished) return;
+      finished = true;
+      clearInterval(timerId); detachGuards();
+      try { await document.exitFullscreen?.(); } catch (e) {}
+      const answers = questions.map((q, i) => ({ questionId: q.id, choiceIndex: selected[i] }));
+      let res;
+      try {
+        const r = await fetch(`/api/test/${role}/submit`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ answers, violations, durationSec: totalTime - timeLeft })
+        });
+        res = await r.json();
+        if (!r.ok) throw new Error(res.error || 'submit failed');
+      } catch (e) { alert('Could not submit your test. Please try again.'); location.href = '/dashboard.html'; return; }
+      showResult(res);
+    }
+
+    function showResult(res) {
+      $('quiz').style.display = 'none';
+      $('result').style.display = 'flex';
+      $('score-pct').textContent = res.percent + '%';
+      $('r-score').textContent = `${res.score}/${res.total}`;
+      $('r-xp').textContent = '+' + res.xpAwarded;
+      $('r-level').textContent = res.level;
+      if (res.badge) {
+        $('result-emoji').textContent = '🏅';
+        $('score-line').textContent = 'You passed and earned a badge!';
+        $('badge-wrap').innerHTML = `<span class="badge-pill badge-${res.badge}">🏅 ${res.badge} ${esc(roleLabel)}</span>`;
+      } else {
+        $('result-emoji').textContent = '💪';
+        $('score-line').textContent = 'So close — you need 55% to earn a badge. Try again!';
+      }
+      if (res.flagged) $('score-line').textContent += ' (Flagged for review: too many screen exits.)';
+    }
+  </script>
+</body>
+</html>

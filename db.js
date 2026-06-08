@@ -1,9 +1,12 @@
 const { Pool } = require('pg');
+const { seedQuestions } = require('./seed');
 
-// Shared Postgres pool (used by waitlist + auth)
+// Shared Postgres pool. Use SSL for hosted DBs (Render), skip it for local.
+const connectionString = process.env.DATABASE_URL;
+const isLocal = !connectionString || /localhost|127\.0\.0\.1/.test(connectionString);
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  connectionString,
+  ssl: isLocal ? false : { rejectUnauthorized: false }
 });
 
 async function initDB() {
@@ -17,7 +20,7 @@ async function initDB() {
       );
     `);
 
-    // Users — students + organizations (admin added later)
+    // Users — students + organizations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -33,7 +36,48 @@ async function initDB() {
       );
     `);
 
-    console.log('✅ Database ready (waitlist + users)');
+    // Profile / gamification columns (idempotent)
+    await pool.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS role VARCHAR(40),
+        ADD COLUMN IF NOT EXISTS xp INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1,
+        ADD COLUMN IF NOT EXISTS streak_days INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS last_active_date DATE;
+    `);
+
+    // Question bank
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS questions (
+        id SERIAL PRIMARY KEY,
+        role VARCHAR(40) NOT NULL,
+        difficulty INT NOT NULL DEFAULT 1,
+        prompt TEXT NOT NULL,
+        options JSONB NOT NULL,
+        correct_index INT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Test attempts (with anti-cheat telemetry)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS test_attempts (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        role VARCHAR(40) NOT NULL,
+        score INT NOT NULL,
+        total INT NOT NULL,
+        percent INT NOT NULL,
+        badge VARCHAR(20),
+        xp_awarded INT NOT NULL DEFAULT 0,
+        violations INT NOT NULL DEFAULT 0,
+        flagged BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await seedQuestions(pool);
+    console.log('✅ Database ready (users + questions + attempts)');
   } catch (err) {
     console.error('❌ DB init error:', err.message);
   }

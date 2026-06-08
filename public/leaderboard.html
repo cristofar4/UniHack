@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniHack — Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='108' fill='%230a0f0d'/%3E%3Crect width='512' height='512' rx='108' fill='none' stroke='%2300ffa6' stroke-width='38'/%3E%3Ctext x='256' y='310' font-family='monospace' font-size='260' font-weight='900' fill='%2300ffa6' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="grid"></div>
+  <nav class="app-nav">
+    <a class="logo" href="/"><div class="logo-icon">&gt;_</div><div>Uni<span>Hack</span></div></a>
+    <div class="nav-right">
+      <a class="btn-ghost" href="/dashboard.html">Dashboard</a>
+      <button class="btn-ghost" id="logout">Log out</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Global <span class="accent">Leaderboard</span></h1>
+    <p class="sub">The highest-ranked hackers across every role, worldwide.</p>
+
+    <div class="me-rank" id="me" style="display:none;"></div>
+
+    <div class="lb-wrap">
+      <table class="lb-table">
+        <thead><tr><th>Rank</th><th>Hacker</th><th>Role</th><th>Level</th><th>Points</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    document.getElementById('logout').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      location.href = '/auth.html';
+    });
+
+    fetch('/api/leaderboard', { credentials: 'include' })
+      .then(r => r.json())
+      .then(({ rows, me }) => {
+        const tb = document.getElementById('rows');
+        if (!rows || rows.length === 0) {
+          tb.innerHTML = '<tr><td colspan="5" class="empty">No ranked hackers yet — be the first. Take a skill test!</td></tr>';
+          return;
+        }
+        const medal = r => r === 1 ? '🏆' : r === 2 ? '🥈' : r === 3 ? '🥉' : '#' + r;
+        tb.innerHTML = rows.map(u =>
+          `<tr><td class="rank-badge">${medal(u.rank)}</td><td class="lb-name">${esc(u.name)}</td><td class="lb-role">${esc(u.role)}</td><td>Lvl ${u.level}</td><td class="lb-pts">${Number(u.xp).toLocaleString()}</td></tr>`
+        ).join('');
+        if (me) {
+          const el = document.getElementById('me');
+          el.style.display = 'block';
+          el.innerHTML = `Your rank: <b>#${me.rank}</b> &nbsp;·&nbsp; <b>${Number(me.xp).toLocaleString()}</b> XP`;
+        }
+      })
+      .catch(() => {
+        document.getElementById('rows').innerHTML = '<tr><td colspan="5" class="empty">Could not load the leaderboard.</td></tr>';
+      });
+  </script>
+</body>
+</html>

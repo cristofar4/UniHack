@@ -6,63 +6,80 @@
   <title>UniHack — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='108' fill='%230a0f0d'/%3E%3Crect width='512' height='512' rx='108' fill='none' stroke='%2300ffa6' stroke-width='38'/%3E%3Ctext x='256' y='310' font-family='monospace' font-size='260' font-weight='900' fill='%2300ffa6' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-    body { background:#0A0F0D; color:#fff; min-height:100vh; }
-    .grid { position:fixed; inset:0; z-index:-1; background-image:linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px); background-size:50px 50px; }
-    nav { display:flex; align-items:center; justify-content:space-between; padding:20px 6%; border-bottom:1px solid rgba(255,255,255,0.06); }
-    .logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:20px; }
-    .logo-icon { background:#0d1f17; border:1.5px solid #00ffa6; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#00ffa6; font-family:monospace; font-weight:700; }
-    .logo span { color:#00ffa6; }
-    .logout { background:transparent; border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.7); padding:9px 18px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; }
-    .logout:hover { border-color:#00ffa6; color:#00ffa6; }
-    .wrap { max-width:1000px; margin:0 auto; padding:48px 6%; }
-    .hello { font-size:34px; font-weight:800; margin-bottom:8px; }
-    .hello span { color:#00ffa6; }
-    .sub { color:#aaa; margin-bottom:32px; }
-    .verify { display:none; align-items:center; gap:12px; background:rgba(255,210,0,0.08); border:1px solid rgba(255,210,0,0.3); color:#ffd200; padding:14px 18px; border-radius:12px; margin-bottom:28px; font-size:14px; }
-    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
-    .card { background:#111; border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:26px; }
-    .card .k { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:10px; }
-    .card .v { font-size:26px; font-weight:800; }
-    .card .v.accent { color:#00ffa6; }
-    .soon { margin-top:36px; padding:22px; border:1px dashed rgba(0,255,166,0.3); border-radius:14px; color:rgba(255,255,255,0.55); font-size:14px; line-height:1.7; }
-    .soon b { color:#00ffa6; }
-  </style>
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <div class="grid"></div>
-  <nav>
-    <div class="logo"><div class="logo-icon">&gt;_</div><div>Uni<span>Hack</span></div></div>
-    <button class="logout" id="logout">Log out</button>
+  <nav class="app-nav">
+    <a class="logo" href="/"><div class="logo-icon">&gt;_</div><div>Uni<span>Hack</span></div></a>
+    <div class="nav-right">
+      <span class="chip" id="chip-streak">🔥 0</span>
+      <span class="chip accent" id="chip-level">⭐ Lvl 1</span>
+      <button class="btn-ghost" id="logout">Log out</button>
+    </div>
   </nav>
-  <div class="wrap">
-    <div class="verify" id="verify">🐝 Check your inbox to verify your email and unlock everything.</div>
-    <h1 class="hello">Welcome, <span id="name">hacker</span></h1>
-    <p class="sub" id="sub">Your hive is loading…</p>
+
+  <div class="container">
+    <div class="banner" id="verify">🐝 Check your inbox to verify your email and unlock everything.</div>
+
+    <h1>Welcome back, <span class="accent" id="name">hacker</span></h1>
+    <p class="sub" id="role-sub">—</p>
 
     <div class="cards">
-      <div class="card"><div class="k">Level</div><div class="v accent">1</div></div>
-      <div class="card"><div class="k">XP</div><div class="v">0</div></div>
-      <div class="card"><div class="k">Streak</div><div class="v">0 🔥</div></div>
-      <div class="card"><div class="k">Rank</div><div class="v">—</div></div>
+      <div class="card"><div class="k">Level</div><div class="v accent" id="level">1</div></div>
+      <div class="card"><div class="k">XP</div><div class="v" id="xp">0</div></div>
+      <div class="card"><div class="k">Streak</div><div class="v" id="streak">0 🔥</div></div>
+      <div class="card"><div class="k">Global rank</div><div class="v" id="rank">—</div></div>
     </div>
 
-    <div class="soon">
-      <b>This is your dashboard shell.</b> Next up we wire in the real loop — role selection, the proctored skill test, badges, the global leaderboard, hackathons, teams, and Hex's streak. Account type: <b id="acct">—</b>.
+    <div class="panel glow">
+      <div class="row">
+        <div>
+          <h3 id="test-title">Your skill test</h3>
+          <p id="test-desc">Prove your skill to earn a badge and climb the leaderboard.</p>
+        </div>
+        <a class="btn" id="test-btn" href="#">Take the test</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div><h3>Global leaderboard</h3><p>See where you rank against hackers worldwide.</p></div>
+        <a class="btn btn-outline" href="/leaderboard.html">View leaderboard</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Coming soon to your hive 🐝</h3>
+      <p>Hackathons, team formation, the community chat, verified-student badges, and the job board are on the way — your XP and streak carry over.</p>
     </div>
   </div>
 
   <script>
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then(r => { if (!r.ok) throw new Error('unauth'); return r.json(); })
+    fetch('/api/profile/me', { credentials: 'include' })
+      .then(r => { if (!r.ok) throw 0; return r.json(); })
       .then(({ user }) => {
+        if (!user.role) { location.href = '/onboarding.html'; return; }
         document.getElementById('name').textContent = user.fullName || user.email.split('@')[0];
-        document.getElementById('sub').textContent = user.email;
-        document.getElementById('acct').textContent = user.accountType;
+        document.getElementById('level').textContent = user.level;
+        document.getElementById('xp').textContent = Number(user.xp).toLocaleString();
+        document.getElementById('streak').textContent = user.streakDays + ' 🔥';
+        document.getElementById('rank').textContent = user.rank ? '#' + user.rank : '—';
+        document.getElementById('chip-streak').textContent = '🔥 ' + user.streakDays;
+        document.getElementById('chip-level').textContent = '⭐ Lvl ' + user.level;
+        const badge = user.badge
+          ? `<span class="badge-pill badge-${user.badge}">🏅 ${user.badge}</span>`
+          : '<span style="color:var(--muted)">No badge yet</span>';
+        document.getElementById('role-sub').innerHTML = `${user.roleLabel} &nbsp;·&nbsp; ${badge}`;
+        document.getElementById('test-title').textContent = `Your ${user.roleLabel} skill test`;
+        document.getElementById('test-desc').textContent = user.badge
+          ? 'Retake the proctored test to beat your best score and earn more XP.'
+          : 'Take the proctored test to earn your first badge and XP.';
+        document.getElementById('test-btn').textContent = user.badge ? 'Retake test' : 'Take the test';
+        document.getElementById('test-btn').href = '/test.html?role=' + user.role;
         if (!user.emailVerified) document.getElementById('verify').style.display = 'flex';
       })
-      .catch(() => { location.href = '/auth.html'; });
+      .catch(() => location.href = '/auth.html');
 
     document.getElementById('logout').addEventListener('click', async () => {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });

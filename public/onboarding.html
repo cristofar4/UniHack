@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniHack — Choose your role</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='108' fill='%230a0f0d'/%3E%3Crect width='512' height='512' rx='108' fill='none' stroke='%2300ffa6' stroke-width='38'/%3E%3Ctext x='256' y='310' font-family='monospace' font-size='260' font-weight='900' fill='%2300ffa6' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="grid"></div>
+  <nav class="app-nav">
+    <a class="logo" href="/"><div class="logo-icon">&gt;_</div><div>Uni<span>Hack</span></div></a>
+    <button class="btn-ghost" id="logout">Log out</button>
+  </nav>
+
+  <div class="container">
+    <h1>Choose your <span class="accent">role</span></h1>
+    <p class="sub">Pick the field you want to prove yourself in. You'll take a skill test to earn your badge and rank — you can add more roles later.</p>
+
+    <div class="role-grid" id="roles">
+      <div class="role-card" data-role="developer"><div class="role-icon">💻</div><h4>Developer</h4><div class="role-tag">Frontend, backend, systems</div></div>
+      <div class="role-card" data-role="designer"><div class="role-icon">🎨</div><h4>Designer</h4><div class="role-tag">UI, UX, product design</div></div>
+      <div class="role-card" data-role="analyst"><div class="role-icon">📊</div><h4>Data Analyst</h4><div class="role-tag">Data, SQL, statistics</div></div>
+      <div class="role-card" data-role="pm"><div class="role-icon">🧭</div><h4>Product Manager</h4><div class="role-tag">Strategy, roadmaps, metrics</div></div>
+      <div class="role-card" data-role="qa"><div class="role-icon">🧪</div><h4>QA Engineer</h4><div class="role-tag">Testing, quality, automation</div></div>
+      <div class="role-card" data-role="entrepreneur"><div class="role-icon">🚀</div><h4>Entrepreneur</h4><div class="role-tag">Startups, growth, pitching</div></div>
+    </div>
+
+    <button class="btn" id="continue" disabled>Continue</button>
+  </div>
+
+  <script>
+    let selected = null;
+    fetch('/api/profile/me', { credentials: 'include' })
+      .then(r => { if (!r.ok) throw 0; return r.json(); })
+      .then(({ user }) => { if (user.role) location.href = '/dashboard.html'; })
+      .catch(() => location.href = '/auth.html');
+
+    document.querySelectorAll('.role-card').forEach(c => c.addEventListener('click', () => {
+      document.querySelectorAll('.role-card').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+      selected = c.dataset.role;
+      document.getElementById('continue').disabled = false;
+    }));
+
+    document.getElementById('continue').addEventListener('click', async () => {
+      if (!selected) return;
+      const btn = document.getElementById('continue');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const r = await fetch('/api/profile/role', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', body: JSON.stringify({ role: selected })
+      });
+      if (r.ok) location.href = '/dashboard.html';
+      else { btn.disabled = false; btn.textContent = 'Continue'; alert('Could not save your role. Try again.'); }
+    });
+
+    document.getElementById('logout').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      location.href = '/auth.html';
+    });
+  </script>
+</body>
+</html>
